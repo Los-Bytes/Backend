@@ -1,5 +1,5 @@
 using Backend.API.Profiles.Infrastructure.Interfaces.ASP.Configuration.Extensions;
-//using Backend.API.Inventory.Infrastructure.Interfaces.ASP.Configuration.Extensions;
+using Backend.API.Inventory.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using Backend.API.Shared.Infrastructure.Documentation.OpenApi.Configuration.Extensions;
 using Backend.API.Shared.Infrastructure.Interfaces.ASP.Configuration;
 using Backend.API.Shared.Infrastructure.Mediator.Cortex.Configuration.Extensions;
@@ -18,7 +18,7 @@ builder.AddOpenApiConfigurationServices();
 // Dependency Injection for Bounded Contexts
 //builder.AddSharedContextServices();
 builder.AddUserProfilesContextServices();
-//builder.AddInventoryContextServices();
+builder.AddInventoryContextServices();
 
 // Mediator Configuration
 builder.AddCortexMediatorServices();
