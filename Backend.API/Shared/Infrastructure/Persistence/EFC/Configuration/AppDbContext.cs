@@ -1,5 +1,5 @@
 using Backend.API.Profiles.Infrastructure.Persistence.EFC.Configuration.Extensions;
-//using Backend.API.Inventory.Infrastructure.Persistence.EFC.Configuration.Extensions;
+using Backend.API.Inventory.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using Backend.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using EntityFrameworkCore.CreatedUpdatedDate.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -50,7 +50,7 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         builder.ApplyUserProfilesConfiguration();
 
         // Inventory Context
-        //builder.ApplyInventoryConfiguration();
+        builder.ApplyInventoryConfiguration();
 
         // General Naming Convention for the database objects
         builder.UseSnakeCaseNamingConvention();
