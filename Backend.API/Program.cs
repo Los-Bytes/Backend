@@ -1,3 +1,4 @@
+using Backend.API.IAM.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using Backend.API.Profiles.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using Backend.API.Inventory.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using Backend.API.Shared.Infrastructure.Documentation.OpenApi.Configuration.Extensions;
@@ -19,6 +20,7 @@ builder.AddOpenApiConfigurationServices();
 //builder.AddSharedContextServices();
 builder.AddUserProfilesContextServices();
 builder.AddInventoryContextServices();
+builder.AddIamContextServices();
 
 // Mediator Configuration
 builder.AddCortexMediatorServices();
