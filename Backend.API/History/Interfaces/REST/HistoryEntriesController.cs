@@ -3,6 +3,7 @@ using Backend.API.History.Domain.Model.Queries;
 using Backend.API.History.Domain.Services;
 using Backend.API.History.Interfaces.REST.Resources;
 using Backend.API.History.Interfaces.REST.Transform;
+using Backend.API.IAM.Infrastructure.Pipeline.Middleware.Attributes;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.API.History.Interfaces.REST;
