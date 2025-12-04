@@ -1,3 +1,4 @@
+using Backend.API.IAM.Infrastructure.Pipeline.Middleware.Extensions; 
 using Backend.API.History.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using Backend.API.IAM.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using Backend.API.Profiles.Infrastructure.Interfaces.ASP.Configuration.Extensions;
@@ -38,6 +39,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
+app.UseRequestAuthorizationMiddleware();
 app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/", () => Results.Redirect("/swagger"));
