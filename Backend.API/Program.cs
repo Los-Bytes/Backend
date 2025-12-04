@@ -1,3 +1,4 @@
+using Backend.API.History.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using Backend.API.IAM.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using Backend.API.Profiles.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using Backend.API.Inventory.Infrastructure.Interfaces.ASP.Configuration.Extensions;
