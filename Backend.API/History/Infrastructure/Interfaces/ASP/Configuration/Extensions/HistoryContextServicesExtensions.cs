@@ -4,26 +4,25 @@ using Backend.API.History.Domain.Repositories;
 using Backend.API.History.Domain.Services;
 using Backend.API.History.Infrastructure.Persistence.EFC.Repositories;
 
-namespace Backend.API.History.Infrastructure.Interfaces.ASP.Configuration.Extensions
+namespace Backend.API.History.Infrastructure.Interfaces.ASP.Configuration.Extensions;
+
+/// <summary>
+/// Dependency injection configuration for the History bounded context.
+/// </summary>
+public static class HistoryContextServicesExtensions
 {
     /// <summary>
-    /// Dependency injection configuration for the History bounded context.
+    /// Adds History bounded context services to the application builder.
     /// </summary>
-    public static class HistoryContextServicesExtensions
+    public static void AddHistoryContextServices(this WebApplicationBuilder builder)
     {
-        /// <summary>
-        /// Adds History bounded context services to the application builder.
-        /// </summary>
-        public static void AddHistoryContextServices(this WebApplicationBuilder builder)
-        {
-            var services = builder.Services;
+        var services = builder.Services;
 
-            // Repositories
-            services.AddScoped<IHistoryEntryRepository, HistoryEntryRepository>();
+        // Repositories
+        services.AddScoped<IHistoryEntryRepository, HistoryEntryRepository>();
 
-            // Command & Query Services
-            services.AddScoped<IHistoryEntryCommandService, HistoryEntryCommandService>();
-            services.AddScoped<IHistoryEntryQueryService, HistoryEntryQueryService>();
-        }
+        // Command & Query Services
+        services.AddScoped<IHistoryEntryCommandService, HistoryEntryCommandService>();
+        services.AddScoped<IHistoryEntryQueryService, HistoryEntryQueryService>();
     }
 }
