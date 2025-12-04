@@ -13,6 +13,7 @@ namespace Backend.API.History.Interfaces.REST;
 [ApiController]
 [Route("history")]
 [Produces("application/json")]
+[Authorize]
 public class HistoryEntriesController : ControllerBase
 {
     private readonly IHistoryEntryCommandService _commandService;
