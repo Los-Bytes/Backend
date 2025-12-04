@@ -13,9 +13,9 @@ public static class WebApplicationBuilderExtensions
             options.SwaggerDoc("v1",
                 new OpenApiInfo
                 {
-                    Title = "ACME.LearningCenterPlatform.API",
+                    Title = "LabIoT.API",
                     Version = "v1",
-                    Description = "ACME Learning Center Platform API",
+                    Description = "LabIoT API",
                     TermsOfService = new Uri("https://acme-learning.com/tos"),
                     Contact = new OpenApiContact
                     {
