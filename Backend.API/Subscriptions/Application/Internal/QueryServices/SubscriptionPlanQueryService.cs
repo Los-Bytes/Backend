@@ -5,16 +5,24 @@ using Backend.API.Subscriptions.Domain.Services;
 
 namespace Backend.API.Subscriptions.Application.Internal.QueryServices;
 
-public class SubscriptionPlanQueryService(ISubscriptionPlanRepository planRepository) 
+/// <summary>
+///     Subscription plan query service
+/// </summary>
+/// <param name="subscriptionPlanRepository">
+///     Subscription plan repository
+/// </param>
+public class SubscriptionPlanQueryService(ISubscriptionPlanRepository subscriptionPlanRepository) 
     : ISubscriptionPlanQueryService
 {
+    /// <inheritdoc />
     public async Task<IEnumerable<SubscriptionPlan>> Handle(GetAllPlansQuery query)
     {
-        return await planRepository.ListAsync();
+        return await subscriptionPlanRepository.ListAsync();
     }
 
+    /// <inheritdoc />
     public async Task<SubscriptionPlan?> Handle(GetPlanByNameQuery query)
     {
-        return await planRepository.FindByNameAsync(query.Name);
+        return await subscriptionPlanRepository.FindByNameAsync(query.Name);
     }
 }

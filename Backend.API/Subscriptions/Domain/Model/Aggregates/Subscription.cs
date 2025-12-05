@@ -1,84 +1,136 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using Backend.API.Subscriptions.Domain.Model.Commands;
 
 namespace Backend.API.Subscriptions.Domain.Model.Aggregates;
 
-public class Subscription
+/// <summary>
+///     Subscription Aggregate Root
+/// </summary>
+/// <remarks>
+///     This class represents the Subscription aggregate root for LabIoT.
+///     It manages user subscription to plans (Free, Pro, Max) with usage limits.
+/// </remarks>
+public partial class Subscription
 {
-    [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int Id { get; set; }
-    
-    [Required]
-    public int UserId { get; set; }
-    
-    [Required]
-    [MaxLength(20)]
-    public string PlanType { get; set; } = "Free";
-    
-    [Required]
-    public DateTime StartDate { get; set; }
-    
-    public DateTime? EndDate { get; set; }
-    
-    [Required]
-    public int MaxMembers { get; set; } = 3;
-    
-    [Required]
-    public int MaxInventoryItems { get; set; } = 50;
-    
-    [Required]
-    public bool IsActive { get; set; } = true;
-    
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-    protected Subscription() { }
-
-    public static Subscription Create(int userId, string planType, DateTime startDate, 
-        int maxMembers, int maxInventoryItems)
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="Subscription" /> class with default values.
+    /// </summary>
+    public Subscription()
     {
-        return new Subscription
-        {
-            UserId = userId,
-            PlanType = planType,
-            StartDate = startDate,
-            MaxMembers = maxMembers,
-            MaxInventoryItems = maxInventoryItems,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+        PlanType = "Free";
+        StartDate = DateTime.UtcNow;
+        MaxMembers = 3;
+        MaxInventoryItems = 50;
+        IsActive = true;
     }
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="Subscription" /> class from a command.
+    /// </summary>
+    /// <param name="command">The create subscription command</param>
+    /// <param name="plan">The subscription plan</param>
+    public Subscription(CreateSubscriptionCommand command, SubscriptionPlan plan)
+    {
+        UserId = command.UserId;
+        PlanType = command.PlanType;
+        StartDate = command.StartDate;
+        EndDate = command.EndDate;
+        MaxMembers = plan.MaxMembers;
+        MaxInventoryItems = plan.MaxInventoryItems;
+        IsActive = command.IsActive;
+    }
+
+    /// <summary>
+    ///     Gets the unique identifier of the subscription.
+    /// </summary>
+    public int Id { get; }
+
+    /// <summary>
+    ///     Gets the user identifier.
+    /// </summary>
+    public int UserId { get; private set; }
+
+    /// <summary>
+    ///     Gets the plan type (Free, Pro, Max).
+    /// </summary>
+    public string PlanType { get; private set; }
+
+    /// <summary>
+    ///     Gets the subscription start date.
+    /// </summary>
+    public DateTime StartDate { get; private set; }
+
+    /// <summary>
+    ///     Gets the subscription end date.
+    /// </summary>
+    public DateTime? EndDate { get; private set; }
+
+    /// <summary>
+    ///     Gets the maximum number of members allowed.
+    /// </summary>
+    public int MaxMembers { get; private set; }
+
+    /// <summary>
+    ///     Gets the maximum number of inventory items allowed.
+    /// </summary>
+    public int MaxInventoryItems { get; private set; }
+
+    /// <summary>
+    ///     Gets whether the subscription is active.
+    /// </summary>
+    public bool IsActive { get; private set; }
+
+    /// <summary>
+    ///     Deactivates the subscription.
+    /// </summary>
     public void Deactivate()
     {
         IsActive = false;
         EndDate = DateTime.UtcNow;
-        UpdatedAt = DateTime.UtcNow;
     }
 
+    /// <summary>
+    ///     Updates subscription limits.
+    /// </summary>
+    /// <param name="maxMembers">Maximum members</param>
+    /// <param name="maxInventoryItems">Maximum inventory items</param>
+    public void UpdateLimits(int maxMembers, int maxInventoryItems)
+    {
+        MaxMembers = maxMembers;
+        MaxInventoryItems = maxInventoryItems;
+    }
+
+    /// <summary>
+    ///     Updates subscription status.
+    /// </summary>
+    /// <param name="isActive">Active status</param>
+    public void UpdateStatus(bool isActive)
+    {
+        IsActive = isActive;
+        if (!isActive && !EndDate.HasValue)
+            EndDate = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    ///     Checks if the subscription is expired.
+    /// </summary>
     public bool IsExpired()
     {
         return EndDate.HasValue && EndDate.Value < DateTime.UtcNow;
     }
 
+    /// <summary>
+    ///     Checks if members are unlimited.
+    /// </summary>
     public bool HasUnlimitedMembers()
     {
         return MaxMembers == -1;
     }
 
+    /// <summary>
+    ///     Checks if inventory items are unlimited.
+    /// </summary>
     public bool HasUnlimitedItems()
     {
         return MaxInventoryItems == -1;
-    }
-
-    public void Update(int maxMembers, int maxInventoryItems, bool isActive)
-    {
-        MaxMembers = maxMembers;
-        MaxInventoryItems = maxInventoryItems;
-        IsActive = isActive;
-        UpdatedAt = DateTime.UtcNow;
     }
 }

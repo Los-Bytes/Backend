@@ -3,6 +3,7 @@ using Backend.API.IAM.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using Backend.API.Profiles.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using Backend.API.Inventory.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using Backend.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions;
+using Backend.API.Subscriptions.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using EntityFrameworkCore.CreatedUpdatedDate.Extensions;
 using Microsoft.EntityFrameworkCore;
 
@@ -59,6 +60,9 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         
         // History Context
         builder.ApplyHistoryConfiguration();
+        
+        // Subscriptions Context
+        builder.ApplySubscriptionsConfiguration();
 
         // General Naming Convention for the database objects
         builder.UseSnakeCaseNamingConvention();
