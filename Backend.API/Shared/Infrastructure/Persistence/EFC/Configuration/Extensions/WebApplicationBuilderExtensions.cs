@@ -1,56 +1,45 @@
-using Microsoft.EntityFrameworkCore;
 using Backend.API.Shared.Domain.Repositories;
 using Backend.API.Shared.Infrastructure.Persistence.EFC.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions;
 
+/// <summary>
+/// WebApplicationBuilder extensions for database configuration.
+/// </summary>
 public static class WebApplicationBuilderExtensions
 {
+    /// <summary>
+    /// Adds the database configuration services for the application.
+    /// Uses the "DefaultConnection" connection string from configuration
+    /// for both Development and Production.
+    /// </summary>
+    /// <param name="builder">The web application builder.</param>
     public static void AddDatabaseConfigurationServices(this WebApplicationBuilder builder)
     {
-        // Desarrollo: usa directamente la connection string del appsettings.Development
-        if (builder.Environment.IsDevelopment())
+        // Lee la cadena de conexión desde appsettings.{Environment}.json
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        if (string.IsNullOrEmpty(connectionString))
+            throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+        // Configura AppDbContext
+        builder.Services.AddDbContext<AppDbContext>(options =>
         {
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-            if (string.IsNullOrEmpty(connectionString))
-                throw new InvalidOperationException("Connection string 'DefaultConnection' not found for Development.");
+            options.UseMySQL(connectionString)
+                .LogTo(Console.WriteLine,
+                    builder.Environment.IsDevelopment()
+                        ? LogLevel.Information   // más verbose en dev
+                        : LogLevel.Error)        // solo errores en prod
+                .EnableDetailedErrors();
 
-            builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseMySQL(connectionString)
-                    .LogTo(Console.WriteLine, LogLevel.Information)
-                    .EnableSensitiveDataLogging()
-                    .EnableDetailedErrors());
-        }
-        // Producción: toma la plantilla y reemplaza %VARIABLES%
-        else if (builder.Environment.IsProduction())
-        {
-            // Carga config de appsettings.Production + variables de entorno
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json",
-                    optional: true, reloadOnChange: false)
-                .AddEnvironmentVariables()
-                .Build();
+            if (builder.Environment.IsDevelopment())
+            {
+                // Solo en desarrollo para evitar exponer datos sensibles en producción
+                options.EnableSensitiveDataLogging();
+            }
+        });
 
-            var connectionStringTemplate = configuration.GetConnectionString("DefaultConnection");
-            if (string.IsNullOrEmpty(connectionStringTemplate))
-                throw new Exception("Database connection string template 'DefaultConnection' is not set in the configuration.");
-
-            // Reemplaza %DATABASE_URL%, %DATABASE_PORT%, etc. con los valores del entorno
-            var connectionString = Environment.ExpandEnvironmentVariables(connectionStringTemplate);
-            if (string.IsNullOrEmpty(connectionString))
-                throw new Exception("Database connection string is empty after expanding environment variables.");
-
-            builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseMySQL(connectionString)
-                    .LogTo(Console.WriteLine, LogLevel.Error)
-                    .EnableDetailedErrors());
-        }
-        else
-        {
-            throw new Exception($"Environment '{builder.Environment.EnvironmentName}' not supported.");
-        }
-
-        // Shared
+        // UnitOfWork compartido
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
     }
 }
