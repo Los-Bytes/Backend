@@ -1,136 +1,115 @@
 using Backend.API.Subscriptions.Domain.Model.Commands;
+using Backend.API.Subscriptions.Domain.Model.ValueObjects;
 
 namespace Backend.API.Subscriptions.Domain.Model.Aggregates;
 
 /// <summary>
 ///     Subscription Aggregate Root
 /// </summary>
-/// <remarks>
-///     This class represents the Subscription aggregate root for LabIoT.
-///     It manages user subscription to plans (Free, Pro, Max) with usage limits.
-/// </remarks>
 public partial class Subscription
 {
-    /// <summary>
-    ///     Initializes a new instance of the <see cref="Subscription" /> class with default values.
-    /// </summary>
+    private DateTime _startDate;
+    private DateTime _endDate;
+
+    // Constructores
     public Subscription()
     {
-        PlanType = "Free";
-        StartDate = DateTime.UtcNow;
-        MaxMembers = 3;
-        MaxInventoryItems = 50;
-        IsActive = true;
+        Price = SubscriptionPrice.Free();
+        var period = SubscriptionPeriod.StartingToday(1);
+        _startDate = period.StartDate;
+        _endDate = period.EndDate;
+        PaymentReference = PaymentReference.Generate();
+        Status = SubscriptionStatus.Pending;
+        BillingCycle = BillingCycle.Monthly;
     }
 
-    /// <summary>
-    ///     Initializes a new instance of the <see cref="Subscription" /> class from a command.
-    /// </summary>
-    /// <param name="command">The create subscription command</param>
-    /// <param name="plan">The subscription plan</param>
-    public Subscription(CreateSubscriptionCommand command, SubscriptionPlan plan)
+    public Subscription(CreateSubscriptionCommand command)
     {
+        PlanId = command.PlanId;
         UserId = command.UserId;
-        PlanType = command.PlanType;
-        StartDate = command.StartDate;
-        EndDate = command.EndDate;
-        MaxMembers = plan.MaxMembers;
-        MaxInventoryItems = plan.MaxInventoryItems;
-        IsActive = command.IsActive;
+        
+        Price = new SubscriptionPrice(command.Amount, command.Currency);
+        _startDate = command.StartDate;
+        _endDate = command.EndDate;
+        PaymentReference = new PaymentReference(command.PaymentReference);
+        Status = SubscriptionStatus.FromString(command.Status);
+        BillingCycle = BillingCycle.Custom(CalculateMonths(command.StartDate, command.EndDate));
     }
 
-    /// <summary>
-    ///     Gets the unique identifier of the subscription.
-    /// </summary>
+    // Propiedades
     public int Id { get; }
-
-    /// <summary>
-    ///     Gets the user identifier.
-    /// </summary>
+    public int PlanId { get; private set; }
     public int UserId { get; private set; }
+    
+    public SubscriptionPrice Price { get; private set; }
+    
+    // ✅ Propiedad calculada (NO mapeada a BD)
+    public SubscriptionPeriod Period 
+    { 
+        get => new SubscriptionPeriod(_startDate, _endDate);
+        private set 
+        {
+            _startDate = value.StartDate;
+            _endDate = value.EndDate;
+        }
+    }
+    
+    public PaymentReference PaymentReference { get; private set; }
+    public SubscriptionStatus Status { get; private set; }
+    public BillingCycle BillingCycle { get; private set; }
 
-    /// <summary>
-    ///     Gets the plan type (Free, Pro, Max).
-    /// </summary>
-    public string PlanType { get; private set; }
-
-    /// <summary>
-    ///     Gets the subscription start date.
-    /// </summary>
-    public DateTime StartDate { get; private set; }
-
-    /// <summary>
-    ///     Gets the subscription end date.
-    /// </summary>
-    public DateTime? EndDate { get; private set; }
-
-    /// <summary>
-    ///     Gets the maximum number of members allowed.
-    /// </summary>
-    public int MaxMembers { get; private set; }
-
-    /// <summary>
-    ///     Gets the maximum number of inventory items allowed.
-    /// </summary>
-    public int MaxInventoryItems { get; private set; }
-
-    /// <summary>
-    ///     Gets whether the subscription is active.
-    /// </summary>
-    public bool IsActive { get; private set; }
-
-    /// <summary>
-    ///     Deactivates the subscription.
-    /// </summary>
-    public void Deactivate()
+    // Métodos de negocio
+    public void Activate()
     {
-        IsActive = false;
-        EndDate = DateTime.UtcNow;
+        if (!Status.CanActivate())
+            throw new InvalidOperationException($"Cannot activate subscription in {Status} state");
+        Status = SubscriptionStatus.Active;
     }
 
-    /// <summary>
-    ///     Updates subscription limits.
-    /// </summary>
-    /// <param name="maxMembers">Maximum members</param>
-    /// <param name="maxInventoryItems">Maximum inventory items</param>
-    public void UpdateLimits(int maxMembers, int maxInventoryItems)
+    public void Cancel()
     {
-        MaxMembers = maxMembers;
-        MaxInventoryItems = maxInventoryItems;
+        if (!Status.CanCancel())
+            throw new InvalidOperationException($"Cannot cancel subscription in {Status} state");
+        Status = SubscriptionStatus.Cancelled;
     }
 
-    /// <summary>
-    ///     Updates subscription status.
-    /// </summary>
-    /// <param name="isActive">Active status</param>
-    public void UpdateStatus(bool isActive)
+    public void Renew(int months)
     {
-        IsActive = isActive;
-        if (!isActive && !EndDate.HasValue)
-            EndDate = DateTime.UtcNow;
+        if (!Status.CanRenew())
+            throw new InvalidOperationException($"Cannot renew subscription in {Status} state");
+        Period = Period.Renew(months);
+        Status = SubscriptionStatus.Active;
     }
 
-    /// <summary>
-    ///     Checks if the subscription is expired.
-    /// </summary>
-    public bool IsExpired()
+    public void Extend(int months)
     {
-        return EndDate.HasValue && EndDate.Value < DateTime.UtcNow;
+        Period = Period.Extend(months);
     }
 
-    /// <summary>
-    ///     Checks if members are unlimited.
-    /// </summary>
-    public bool HasUnlimitedMembers()
+    public void UpdatePrice(decimal amount, string currency = "USD")
     {
-        return MaxMembers == -1;
+        Price = new SubscriptionPrice(amount, currency);
     }
 
-    /// <summary>
-    ///     Checks if inventory items are unlimited.
-    /// </summary>
-    public bool HasUnlimitedItems()
+    public void ApplyDiscount(decimal discountPercentage)
     {
-        return MaxInventoryItems == -1;
+        Price = Price.ApplyDiscount(discountPercentage);
+    }
+
+    public bool IsCurrentlyActive() => Period.IsActive() && Status == SubscriptionStatus.Active;
+    public bool HasExpired() => Period.HasExpired();
+    public int GetRemainingDays() => Period.RemainingDays();
+
+    public void CheckAndMarkAsExpired()
+    {
+        if (HasExpired() && Status == SubscriptionStatus.Active)
+        {
+            Status = SubscriptionStatus.Expired;
+        }
+    }
+
+    private static int CalculateMonths(DateTime start, DateTime end)
+    {
+        return ((end.Year - start.Year) * 12) + end.Month - start.Month;
     }
 }

@@ -8,6 +8,7 @@ using Backend.API.Shared.Infrastructure.Interfaces.ASP.Configuration;
 using Backend.API.Shared.Infrastructure.Mediator.Cortex.Configuration.Extensions;
 using Backend.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions;
 using Backend.API.Subscriptions.Infrastructure.Interfaces.ASP.Configuration.Extensions;
+using Backend.API.Laboratories.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,7 @@ builder.AddInventoryContextServices();
 builder.AddIamContextServices();
 builder.AddHistoryContextServices();
 builder.AddSubscriptionsContextServices();
+builder.AddLaboratoryContextServices();
 
 // Mediator Configuration
 builder.AddCortexMediatorServices();

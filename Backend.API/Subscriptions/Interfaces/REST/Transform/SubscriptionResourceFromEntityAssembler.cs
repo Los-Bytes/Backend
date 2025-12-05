@@ -8,22 +8,18 @@ namespace Backend.API.Subscriptions.Interfaces.REST.Transform;
 /// </summary>
 public static class SubscriptionResourceFromEntityAssembler
 {
-    /// <summary>
-    ///     Create a SubscriptionResource from a Subscription entity
-    /// </summary>
-    /// <param name="entity">The <see cref="Subscription" /> entity</param>
-    /// <returns>The <see cref="SubscriptionResource" /> resource</returns>
     public static SubscriptionResource ToResourceFromEntity(Subscription entity)
     {
         return new SubscriptionResource(
             entity.Id,
+            entity.PlanId,
             entity.UserId,
-            entity.PlanType,
-            entity.StartDate,
-            entity.EndDate,
-            entity.MaxMembers,
-            entity.MaxInventoryItems,
-            entity.IsActive
+            entity.Price.Amount,
+            entity.Price.Currency,
+            entity.Period.StartDate,
+            entity.Period.EndDate,
+            entity.PaymentReference.Value,
+            entity.Status.Value
         );
     }
 }

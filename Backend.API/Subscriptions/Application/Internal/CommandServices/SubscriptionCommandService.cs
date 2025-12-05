@@ -10,21 +10,8 @@ namespace Backend.API.Subscriptions.Application.Internal.CommandServices;
 /// <summary>
 ///     Subscription command service
 /// </summary>
-/// <param name="subscriptionRepository">
-///     Subscription repository
-/// </param>
-/// <param name="subscriptionPlanRepository">
-///     Subscription plan repository
-/// </param>
-/// <param name="subscriptionQueryService">
-///     Subscription query service
-/// </param>
-/// <param name="unitOfWork">
-///     Unit of work
-/// </param>
 public class SubscriptionCommandService(
     ISubscriptionRepository subscriptionRepository,
-    ISubscriptionPlanRepository subscriptionPlanRepository,
     ISubscriptionQueryService subscriptionQueryService,
     IUnitOfWork unitOfWork
 ) : ISubscriptionCommandService
@@ -32,18 +19,9 @@ public class SubscriptionCommandService(
     /// <inheritdoc />
     public async Task<Subscription?> Handle(CreateSubscriptionCommand command)
     {
-        var plan = await subscriptionPlanRepository.FindByNameAsync(command.PlanType);
-        if (plan == null)
-            return null;
-
-        var existingActive = await subscriptionRepository.FindActiveByUserIdAsync(command.UserId);
-        if (existingActive != null && existingActive.PlanType == command.PlanType)
-            return null;
-
-        var subscription = new Subscription(command, plan);
-        
         try
         {
+            var subscription = new Subscription(command);
             await subscriptionRepository.AddAsync(subscription);
             await unitOfWork.CompleteAsync();
             return subscription;
@@ -62,11 +40,14 @@ public class SubscriptionCommandService(
             var query = new GetSubscriptionByIdQuery(command.Id);
             var subscription = await subscriptionQueryService.Handle(query);
 
-            if (subscription == null)
-                return null;
+            if (subscription == null) return null;
 
-            subscription.UpdateLimits(command.MaxMembers, command.MaxInventoryItems);
-            subscription.UpdateStatus(command.IsActive);
+            subscription.UpdatePrice(command.Amount, command.Currency);
+            
+            if (command.IsActive)
+                subscription.Activate();
+            else
+                subscription.Cancel();
             
             subscriptionRepository.Update(subscription);
             await unitOfWork.CompleteAsync();
@@ -83,69 +64,42 @@ public class SubscriptionCommandService(
     {
         try
         {
-            var newPlan = await subscriptionPlanRepository.FindByNameAsync(command.NewPlanType);
-            if (newPlan == null)
-                return null;
-
+            // Cancelar suscripción actual
             var currentQuery = new GetActiveSubscriptionByUserIdQuery(command.UserId);
             var currentSubscription = await subscriptionQueryService.Handle(currentQuery);
             
             if (currentSubscription != null)
             {
-                currentSubscription.Deactivate();
+                currentSubscription.Cancel();
                 subscriptionRepository.Update(currentSubscription);
             }
 
+            // Determinar precio según el plan
+            decimal amount = command.NewPlanType.ToUpperInvariant() switch
+            {
+                "FREE" => 0m,
+                "PRO" => 9.99m,
+                "MAX" => 19.99m,
+                _ => 0m
+            };
+
+            // Crear nueva suscripción
             var createCommand = new CreateSubscriptionCommand(
-                command.UserId,
-                command.NewPlanType,
-                DateTime.UtcNow,
-                null,
-                newPlan.MaxMembers,
-                newPlan.MaxInventoryItems,
-                true
+                PlanId: 0, // No usamos PlanId
+                UserId: command.UserId,
+                Amount: amount,
+                Currency: "USD",
+                StartDate: DateTime.UtcNow,
+                EndDate: amount == 0 ? DateTime.UtcNow.AddYears(100) : DateTime.UtcNow.AddMonths(1),
+                PaymentReference: $"PLAN-{command.NewPlanType}-{DateTime.UtcNow:yyyyMMddHHmmss}",
+                Status: "Active"
             );
 
-            var newSubscription = new Subscription(createCommand, newPlan);
+            var newSubscription = new Subscription(createCommand);
             await subscriptionRepository.AddAsync(newSubscription);
             await unitOfWork.CompleteAsync();
 
             return newSubscription;
-        }
-        catch (Exception)
-        {
-            return null;
-        }
-    }
-
-    /// <inheritdoc />
-    public async Task<Subscription?> InitializeDefaultSubscription(int userId)
-    {
-        try
-        {
-            var existing = await subscriptionRepository.FindActiveByUserIdAsync(userId);
-            if (existing != null)
-                return existing;
-
-            var freePlan = await subscriptionPlanRepository.FindByNameAsync("Free");
-            if (freePlan == null)
-                return null;
-
-            var command = new CreateSubscriptionCommand(
-                userId,
-                "Free",
-                DateTime.UtcNow,
-                null,
-                freePlan.MaxMembers,
-                freePlan.MaxInventoryItems,
-                true
-            );
-
-            var subscription = new Subscription(command, freePlan);
-            await subscriptionRepository.AddAsync(subscription);
-            await unitOfWork.CompleteAsync();
-
-            return subscription;
         }
         catch (Exception)
         {

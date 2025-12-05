@@ -1,3 +1,4 @@
+using Backend.API.Subscriptions.Application.ACL;
 using Backend.API.Subscriptions.Application.Internal.CommandServices;
 using Backend.API.Subscriptions.Application.Internal.QueryServices;
 using Backend.API.Subscriptions.Domain.Repositories;
@@ -11,16 +12,16 @@ namespace Backend.API.Subscriptions.Infrastructure.Interfaces.ASP.Configuration.
 /// </summary>
 public static class WebApplicationBuilderExtensions
 {
-    /// <summary>
-    ///     Registers the subscriptions context services
-    /// </summary>
-    /// <param name="builder">The web application builder</param>
     public static void AddSubscriptionsContextServices(this WebApplicationBuilder builder)
     {
+        // Repositories
         builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
-        builder.Services.AddScoped<ISubscriptionPlanRepository, SubscriptionPlanRepository>();
+        
+        // Services
         builder.Services.AddScoped<ISubscriptionCommandService, SubscriptionCommandService>();
         builder.Services.AddScoped<ISubscriptionQueryService, SubscriptionQueryService>();
-        builder.Services.AddScoped<ISubscriptionPlanQueryService, SubscriptionPlanQueryService>();
+        
+        // ACL Facade
+        builder.Services.AddScoped<SubscriptionsContextFacade>();
     }
 }
