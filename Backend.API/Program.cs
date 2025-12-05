@@ -14,6 +14,20 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers(options => options.Conventions.Add(new KebabCaseRouteNamingConvention()));
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        policy
+            .WithOrigins(
+                "https://frontendwebapplications-vvrx.onrender.com", // front en Render
+                "http://localhost:5173"                             
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 // Database Configuration
 builder.AddDatabaseConfigurationServices();
 
@@ -37,6 +51,7 @@ var app = builder.Build();
 // Verify if the database exists and create it if it doesn't
 app.EnsureDatabaseCreated();
 
+
 // Configure OpenAPI/Swagger middleware
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -47,3 +62,4 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/", () => Results.Redirect("/swagger"));
 app.Run();
+
