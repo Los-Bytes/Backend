@@ -3,6 +3,7 @@ using Backend.API.Profiles.Domain.Model.Queries;
 using Backend.API.Profiles.Domain.Services;
 using Backend.API.Profiles.Interfaces.REST.Resources;
 using Backend.API.Profiles.Interfaces.REST.Transform;
+using Backend.API.IAM.Infrastructure.Pipeline.Middleware.Attributes; 
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -15,6 +16,7 @@ namespace Backend.API.Profiles.Interfaces.REST;
 [Route("api/v1/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Available User Profile Endpoints.")]
+[Authorize]
 public class UserProfilesController(
     IUserProfileCommandService userProfileCommandService,
     IUserProfileQueryService userProfileQueryService)
