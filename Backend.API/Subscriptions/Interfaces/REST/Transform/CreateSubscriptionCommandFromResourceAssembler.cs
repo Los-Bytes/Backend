@@ -8,21 +8,17 @@ namespace Backend.API.Subscriptions.Interfaces.REST.Transform;
 /// </summary>
 public static class CreateSubscriptionCommandFromResourceAssembler
 {
-    /// <summary>
-    ///     Create a CreateSubscriptionCommand from a resource
-    /// </summary>
-    /// <param name="resource">The <see cref="CreateSubscriptionResource" /> resource</param>
-    /// <returns>The <see cref="CreateSubscriptionCommand" /> command</returns>
     public static CreateSubscriptionCommand ToCommandFromResource(CreateSubscriptionResource resource)
     {
         return new CreateSubscriptionCommand(
+            resource.PlanId,
             resource.UserId,
-            resource.PlanType,
+            resource.Amount,
+            resource.Currency,
             resource.StartDate,
             resource.EndDate,
-            resource.MaxMembers,
-            resource.MaxInventoryItems,
-            resource.IsActive
+            resource.PaymentReference,
+            resource.Status
         );
     }
 }

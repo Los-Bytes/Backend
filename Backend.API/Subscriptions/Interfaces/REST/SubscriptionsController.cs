@@ -9,7 +9,7 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace Backend.API.Subscriptions.Interfaces.REST;
 
 /// <summary>
-///     Controller for managing subscriptions.
+///     Controller for managing subscriptions
 /// </summary>
 [ApiController]
 [Route("api/v1/[controller]")]
@@ -20,14 +20,10 @@ public class SubscriptionsController(
     ISubscriptionQueryService subscriptionQueryService)
     : ControllerBase
 {
-    /// <summary>
-    ///     Get a subscription by its unique identifier
-    /// </summary>
     [HttpGet("{id:int}")]
-    [SwaggerOperation("Get Subscription by Id", "Get a subscription by its unique identifier.",
-        OperationId = "GetSubscriptionById")]
-    [SwaggerResponse(200, "The subscription was found and returned.", typeof(SubscriptionResource))]
-    [SwaggerResponse(404, "The subscription was not found.")]
+    [SwaggerOperation("Get Subscription by Id")]
+    [SwaggerResponse(200, "Subscription found", typeof(SubscriptionResource))]
+    [SwaggerResponse(404, "Subscription not found")]
     public async Task<IActionResult> GetSubscriptionById(int id)
     {
         var query = new GetSubscriptionByIdQuery(id);
@@ -37,35 +33,23 @@ public class SubscriptionsController(
         return Ok(resource);
     }
 
-    /// <summary>
-    ///     Get active subscription by user ID
-    /// </summary>
-    [HttpGet("active")]
-    [SwaggerOperation("Get Active Subscription by User Id", 
-        "Get the active subscription for a user.", 
-        OperationId = "GetActiveSubscriptionByUserId")]
-    [SwaggerResponse(200, "The subscription was found and returned.", typeof(SubscriptionResource))]
-    [SwaggerResponse(404, "No active subscription found for user.")]
-    public async Task<IActionResult> GetActiveSubscriptionByUserId([FromQuery] int userId)
+    [HttpGet("user/{userId:int}")]
+    [SwaggerOperation("Get Active Subscription by User Id")]
+    [SwaggerResponse(200, "Subscription found", typeof(SubscriptionResource))]
+    [SwaggerResponse(404, "Subscription not found")]
+    public async Task<IActionResult> GetActiveSubscriptionByUserId(int userId)
     {
         var query = new GetActiveSubscriptionByUserIdQuery(userId);
         var subscription = await subscriptionQueryService.Handle(query);
-        if (subscription is null) 
-            return NotFound(new { message = $"No active subscription found for user {userId}." });
+        if (subscription is null) return NotFound();
         var resource = SubscriptionResourceFromEntityAssembler.ToResourceFromEntity(subscription);
         return Ok(resource);
     }
 
-    /// <summary>
-    ///     Get all subscriptions by user ID
-    /// </summary>
-    [HttpGet]
-    [SwaggerOperation("Get All Subscriptions by User Id", 
-        "Get all subscriptions for a user.", 
-        OperationId = "GetAllSubscriptionsByUserId")]
-    [SwaggerResponse(200, "The subscriptions were found and returned.", 
-        typeof(IEnumerable<SubscriptionResource>))]
-    public async Task<IActionResult> GetAllSubscriptionsByUserId([FromQuery] int userId)
+    [HttpGet("user/{userId:int}/all")]
+    [SwaggerOperation("Get All Subscriptions by User Id")]
+    [SwaggerResponse(200, "Subscriptions found", typeof(IEnumerable<SubscriptionResource>))]
+    public async Task<IActionResult> GetAllSubscriptionsByUserId(int userId)
     {
         var query = new GetAllSubscriptionsByUserIdQuery(userId);
         var subscriptions = await subscriptionQueryService.Handle(query);
@@ -73,55 +57,28 @@ public class SubscriptionsController(
         return Ok(resources);
     }
 
-    /// <summary>
-    ///     Create a new subscription
-    /// </summary>
     [HttpPost]
-    [SwaggerOperation("Create Subscription", "Create a new subscription.", 
-        OperationId = "CreateSubscription")]
-    [SwaggerResponse(201, "The subscription was created.", typeof(SubscriptionResource))]
-    [SwaggerResponse(400, "The subscription was not created.")]
+    [SwaggerOperation("Create Subscription")]
+    [SwaggerResponse(201, "Subscription created", typeof(SubscriptionResource))]
+    [SwaggerResponse(400, "Bad request")]
     public async Task<IActionResult> CreateSubscription(CreateSubscriptionResource resource)
     {
         var command = CreateSubscriptionCommandFromResourceAssembler.ToCommandFromResource(resource);
         var subscription = await subscriptionCommandService.Handle(command);
         if (subscription is null) return BadRequest();
         var subscriptionResource = SubscriptionResourceFromEntityAssembler.ToResourceFromEntity(subscription);
-        return CreatedAtAction(nameof(GetSubscriptionById), new { id = subscription.Id },
-            subscriptionResource);
+        return CreatedAtAction(nameof(GetSubscriptionById), new { id = subscription.Id }, subscriptionResource);
     }
 
-    /// <summary>
-    ///     Update subscription limits
-    /// </summary>
     [HttpPut("{id:int}")]
-    [SwaggerOperation("Update Subscription", "Update subscription limits and status.", 
-        OperationId = "UpdateSubscription")]
-    [SwaggerResponse(200, "The subscription was updated.", typeof(SubscriptionResource))]
-    [SwaggerResponse(404, "The subscription was not found.")]
+    [SwaggerOperation("Update Subscription")]
+    [SwaggerResponse(200, "Subscription updated", typeof(SubscriptionResource))]
+    [SwaggerResponse(404, "Subscription not found")]
     public async Task<IActionResult> UpdateSubscription(int id, UpdateSubscriptionResource resource)
     {
         var command = UpdateSubscriptionCommandFromResourceAssembler.ToCommandFromResource(id, resource);
         var subscription = await subscriptionCommandService.Handle(command);
         if (subscription is null) return NotFound();
-        var subscriptionResource = SubscriptionResourceFromEntityAssembler.ToResourceFromEntity(subscription);
-        return Ok(subscriptionResource);
-    }
-
-    /// <summary>
-    ///     Change subscription plan
-    /// </summary>
-    [HttpPost("change-plan")]
-    [SwaggerOperation("Change Subscription Plan", 
-        "Change user subscription to a different plan.", 
-        OperationId = "ChangeSubscriptionPlan")]
-    [SwaggerResponse(200, "The subscription plan was changed.", typeof(SubscriptionResource))]
-    [SwaggerResponse(400, "The subscription plan was not changed.")]
-    public async Task<IActionResult> ChangeSubscriptionPlan(ChangeSubscriptionPlanResource resource)
-    {
-        var command = ChangeSubscriptionPlanCommandFromResourceAssembler.ToCommandFromResource(resource);
-        var subscription = await subscriptionCommandService.Handle(command);
-        if (subscription is null) return BadRequest();
         var subscriptionResource = SubscriptionResourceFromEntityAssembler.ToResourceFromEntity(subscription);
         return Ok(subscriptionResource);
     }
