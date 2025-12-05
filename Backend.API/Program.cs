@@ -27,7 +27,7 @@ builder.AddInventoryContextServices();
 builder.AddIamContextServices();
 builder.AddHistoryContextServices();
 builder.AddSubscriptionsContextServices();
-//builder.AddLaboratoryContextServices();
+builder.AddLaboratoryContextServices();
 
 // Mediator Configuration
 builder.AddCortexMediatorServices();

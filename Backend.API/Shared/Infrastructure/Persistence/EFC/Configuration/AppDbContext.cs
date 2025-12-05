@@ -63,7 +63,7 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         builder.ApplyHistoryConfiguration();
         
         // Subscriptions Context
-        //builder.ApplySubscriptionsConfiguration();
+        builder.ApplySubscriptionsConfiguration();
         
         //Laboratory Context
         builder.ApplyLaboratoryConfiguration();
