@@ -16,11 +16,11 @@ public static class WebApplicationBuilderExtensions
                     Title = "LabIoT.API",
                     Version = "v1",
                     Description = "LabIoT API",
-                    TermsOfService = new Uri("https://acme-learning.com/tos"),
+                    TermsOfService = new Uri("https://LabIoT-LosBytes.com/tos"),
                     Contact = new OpenApiContact
                     {
-                        Name = "ACME Studios",
-                        Email = "contact@acme.com"
+                        Name = "LabIoT",
+                        Email = "contact@LabIoT.com"
                     },
                     License = new OpenApiLicense
                     {
