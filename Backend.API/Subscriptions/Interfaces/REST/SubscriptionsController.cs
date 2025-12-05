@@ -3,6 +3,7 @@ using Backend.API.Subscriptions.Domain.Model.Queries;
 using Backend.API.Subscriptions.Domain.Services;
 using Backend.API.Subscriptions.Interfaces.REST.Resources;
 using Backend.API.Subscriptions.Interfaces.REST.Transform;
+using Backend.API.IAM.Infrastructure.Pipeline.Middleware.Attributes; 
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -15,6 +16,7 @@ namespace Backend.API.Subscriptions.Interfaces.REST;
 [Route("api/v1/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Available Subscription Endpoints.")]
+[Authorize]
 public class SubscriptionsController(
     ISubscriptionCommandService subscriptionCommandService,
     ISubscriptionQueryService subscriptionQueryService)

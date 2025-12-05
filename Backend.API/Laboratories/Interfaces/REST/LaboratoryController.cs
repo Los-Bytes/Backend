@@ -3,6 +3,7 @@ using Backend.API.Laboratories.Domain.Model.Queries;
 using Backend.API.Laboratories.Domain.Services;
 using Backend.API.Laboratories.Interfaces.REST.Resources;
 using Backend.API.Laboratories.Interfaces.REST.Transform;
+using Backend.API.IAM.Infrastructure.Pipeline.Middleware.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -15,6 +16,7 @@ namespace Backend.API.Laboratories.Interfaces.REST;
 [Route("api/v1/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Available Laboratory Endpoints.")]
+[Authorize]
 public class LaboratoriesController(
     ILaboratoryCommandService laboratoryCommandService,
     ILaboratoryQueryService laboratoryQueryService)

@@ -33,4 +33,11 @@
         <PackageReference Include="Cortex.Mediator" Version="2.1.0"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <EmbeddedResource Update="Resource\SharedResource.resx">
+        <Generator>ResXFileCodeGenerator</Generator>
+        <LastGenOutput>SharedResource.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+    </ItemGroup>
+
 </Project>
