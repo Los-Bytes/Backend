@@ -20,7 +20,7 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
             "http://localhost:5173",
             "http://localhost:3000",
-            "https://frontendwebapplications-7x8z.onrender.com"
+            "https://frontendwebapplications.onrender.com"
         )
         .AllowAnyHeader()
         .AllowAnyMethod()
@@ -34,7 +34,7 @@ builder.Services.AddCors(options =>
     {
         policy
             .WithOrigins(
-                "https://frontendwebapplications-vvrx.onrender.com", // front en Render
+                "https://frontendwebapplications.onrender.com", // front en Render
                 "http://localhost:5173"                             
             )
             .AllowAnyHeader()
