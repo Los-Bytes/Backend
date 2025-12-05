@@ -39,7 +39,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
-app.UseRequestAuthorizationMiddleware();
+app.RequestAuthorizationMiddlewareExtensions();
 app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/", () => Results.Redirect("/swagger"));
