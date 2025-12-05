@@ -1,9 +1,13 @@
+using Backend.API.IAM.Infrastructure.Pipeline.Middleware.Extensions; 
+using Backend.API.History.Infrastructure.Interfaces.ASP.Configuration.Extensions;
+using Backend.API.IAM.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using Backend.API.Profiles.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using Backend.API.Inventory.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 using Backend.API.Shared.Infrastructure.Documentation.OpenApi.Configuration.Extensions;
 using Backend.API.Shared.Infrastructure.Interfaces.ASP.Configuration;
 using Backend.API.Shared.Infrastructure.Mediator.Cortex.Configuration.Extensions;
 using Backend.API.Shared.Infrastructure.Persistence.EFC.Configuration.Extensions;
+using Backend.API.Subscriptions.Infrastructure.Interfaces.ASP.Configuration.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +23,9 @@ builder.AddOpenApiConfigurationServices();
 //builder.AddSharedContextServices();
 builder.AddUserProfilesContextServices();
 builder.AddInventoryContextServices();
+builder.AddIamContextServices();
+builder.AddHistoryContextServices();
+builder.AddSubscriptionsContextServices();
 
 // Mediator Configuration
 builder.AddCortexMediatorServices();
@@ -33,6 +40,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
+app.UseRequestAuthorization();
 app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/", () => Results.Redirect("/swagger"));

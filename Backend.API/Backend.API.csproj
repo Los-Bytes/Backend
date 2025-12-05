@@ -33,8 +33,4 @@
         <PackageReference Include="Cortex.Mediator" Version="2.1.0"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <Folder Include="IAM\Application\ACL\"/>
-    </ItemGroup>
-
 </Project>
