@@ -13,6 +13,20 @@ using Backend.API.Laboratories.Infrastructure.Interfaces.ASP.Configuration.Exten
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers(options => options.Conventions.Add(new KebabCaseRouteNamingConvention()));
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins(
+            "http://localhost:5173",
+            "http://localhost:3000",
+            "https://frontendwebapplications-7x8z.onrender.com"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
+    });
+});
 
 // Database Configuration
 builder.AddDatabaseConfigurationServices();
@@ -42,6 +56,9 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
+// CORS Middleware
+app.UseCors("AllowFrontend");
+
 app.UseRequestAuthorization();
 app.UseAuthorization();
 app.MapControllers();
