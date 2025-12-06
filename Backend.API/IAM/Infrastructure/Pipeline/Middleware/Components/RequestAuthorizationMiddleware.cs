@@ -5,62 +5,105 @@ using Backend.API.IAM.Infrastructure.Pipeline.Middleware.Attributes;
 
 namespace Backend.API.IAM.Infrastructure.Pipeline.Middleware.Components;
 
-/**
- * RequestAuthorizationMiddleware is a custom middleware.
- * This middleware is used to authorize requests.
- * It validates a token is included in the request header and that the token is valid.
- * If the token is valid then it sets the user in HttpContext.Items["User"].
- */
-public class RequestAuthorizationMiddleware(RequestDelegate next)
+/// <summary>
+/// RequestAuthorizationMiddleware is a custom middleware.
+/// This middleware is used to authorize requests.
+/// It validates a token is included in the request header and that the token is valid.
+/// If the token is valid then it sets the user in HttpContext.Items["User"].
+/// </summary>
+public class RequestAuthorizationMiddleware
 {
-    /**
-     * InvokeAsync is called by the ASP.NET Core runtime.
-     * It is used to authorize requests.
-     * It validates a token is included in the request header and that the token is valid.
-     * If the token is valid then it sets the user in HttpContext.Items["User"].
-     */
+    private readonly RequestDelegate _next;
+
+    public RequestAuthorizationMiddleware(RequestDelegate next)
+    {
+        _next = next;
+    }
+
+    /// <summary>
+    /// Authorizes incoming HTTP requests based on the Authorization header and custom IAM attributes.
+    /// </summary>
     public async Task InvokeAsync(
         HttpContext context,
         IUserQueryService userQueryService,
         ITokenService tokenService)
     {
-        Console.WriteLine("Entering InvokeAsync");
-        // skip authorization if endpoint is decorated with [AllowAnonymous] attribute
-        var allowAnonymous = context.Request.HttpContext.GetEndpoint()!.Metadata
-            .Any(m => m.GetType() == typeof(AllowAnonymousAttribute));
-        Console.WriteLine($"Allow Anonymous is {allowAnonymous}");
+        // 1. Si el endpoint tiene [AllowAnonymous], no hacemos nada
+        var endpoint = context.Request.HttpContext.GetEndpoint();
+        var allowAnonymous = endpoint?.Metadata
+            .Any(m => m.GetType() == typeof(AllowAnonymousAttribute)) ?? false;
+
         if (allowAnonymous)
         {
-            Console.WriteLine("Skipping authorization");
-            // [AllowAnonymous] attribute is set, so skip authorization
-            await next(context);
+            await _next(context);
             return;
         }
 
-        Console.WriteLine("Entering authorization");
-        // get token from request header
-        var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+        // 2. Desde aquí: el endpoint requiere autenticación
 
+        // Obtener header Authorization
+        var authorizationHeader = context.Request.Headers["Authorization"].FirstOrDefault();
 
-        // if token is null then throw exception
-        if (token == null) throw new Exception("Null or invalid token");
+        if (string.IsNullOrWhiteSpace(authorizationHeader))
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await context.Response.WriteAsync("Null or invalid token");
+            return;
+        }
 
-        // validate token
-        var userId = await tokenService.ValidateToken(token);
+        // Debe venir como: "Bearer <token>"
+        var parts = authorizationHeader.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != 2 || !parts[0].Equals("Bearer", StringComparison.OrdinalIgnoreCase))
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await context.Response.WriteAsync("Null or invalid token");
+            return;
+        }
 
-        // if token is invalid then throw exception
-        if (userId == null) throw new Exception("Invalid token");
+        var token = parts[1];
 
-        // get user by id
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await context.Response.WriteAsync("Null or invalid token");
+            return;
+        }
+
+        // 3. Validar token
+        int? userId;
+        try
+        {
+            userId = await tokenService.ValidateToken(token);
+        }
+        catch
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await context.Response.WriteAsync("Invalid token");
+            return;
+        }
+
+        if (userId is null)
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await context.Response.WriteAsync("Invalid token");
+            return;
+        }
+
+        // 4. Obtener usuario
         var getUserByIdQuery = new GetUserByIdQuery(userId.Value);
-
-        // set user in HttpContext.Items["User"]
-
         var user = await userQueryService.Handle(getUserByIdQuery);
-        Console.WriteLine("Successful authorization. Updating Context...");
+
+        if (user is null)
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await context.Response.WriteAsync("User not found");
+            return;
+        }
+
+        // 5. Guardar usuario en HttpContext para otros componentes
         context.Items["User"] = user;
-        Console.WriteLine("Continuing with Middleware Pipeline");
-        // call next middleware
-        await next(context);
+
+        // 6. Continuar con el pipeline
+        await _next(context);
     }
 }

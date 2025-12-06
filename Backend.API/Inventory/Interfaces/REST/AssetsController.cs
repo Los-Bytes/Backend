@@ -4,6 +4,7 @@ using Backend.API.Inventory.Domain.Services;
 using Backend.API.Inventory.Interfaces.REST.Resources;
 using Backend.API.Inventory.Interfaces.REST.Transform;
 using Microsoft.AspNetCore.Mvc;
+using Backend.API.IAM.Infrastructure.Pipeline.Middleware.Attributes; 
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Backend.API.Inventory.Interfaces.REST;
@@ -15,6 +16,7 @@ namespace Backend.API.Inventory.Interfaces.REST;
 [Route("api/v1/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
 [SwaggerTag("Available Inventory Endpoints.")]
+[Authorize] 
 public class InventoryController(
     IAssetCommandService assetCommandService,
     IAssetQueryService assetQueryService)

@@ -1,4 +1,4 @@
-﻿using System.Net.Mime;
+using System.Net.Mime;
 using Backend.API.IAM.Domain.Services;
 using Backend.API.IAM.Infrastructure.Pipeline.Middleware.Attributes;
 using Backend.API.IAM.Interfaces.REST.Resources;
@@ -11,7 +11,6 @@ namespace Backend.API.IAM.Interfaces.REST;
 /// <summary>
 /// Controller for authentication operations.
 /// </summary>
-[Authorize]
 [ApiController]
 [Route("api/v1/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
@@ -24,7 +23,7 @@ public class AuthenticationController(IUserCommandService userCommandService) : 
     /// <param name="signInResource">The sign-in resource containing username and password.</param>
     /// <returns>The authenticated user resource, including a JWT token</returns>
     [HttpPost("sign-in")]
-    [AllowAnonymous]
+    [AllowAnonymous] 
     [SwaggerOperation(
         Summary = "Sign in",
         Description = "Sign in a user",
@@ -34,9 +33,11 @@ public class AuthenticationController(IUserCommandService userCommandService) : 
     {
         var signInCommand = SignInCommandFromResourceAssembler.ToCommandFromResource(signInResource);
         var authenticatedUser = await userCommandService.Handle(signInCommand);
+
         var resource =
             AuthenticatedUserResourceFromEntityAssembler.ToResourceFromEntity(authenticatedUser.user,
                 authenticatedUser.token);
+
         return Ok(resource);
     }
 
@@ -46,7 +47,7 @@ public class AuthenticationController(IUserCommandService userCommandService) : 
     /// <param name="signUpResource">The sign-up resource containing username and password.</param>
     /// <returns>A confirmation message on successful creation.</returns>
     [HttpPost("sign-up")]
-    [AllowAnonymous]
+    [AllowAnonymous] 
     [SwaggerOperation(
         Summary = "Sign-up",
         Description = "Sign up a new user",
